@@ -137,6 +137,7 @@ name = "email-statistics-tool"
 version = "0.1.0"
 dependencies = [
  "base64 0.21.7",
+ "chrono",
  "imap",
  "mailparse",
  "native-tls",

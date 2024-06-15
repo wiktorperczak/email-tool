@@ -1,9 +1,12 @@
 extern crate imap;
 extern crate native_tls;
+
 use std::net::TcpStream;
+use native_tls::TlsStream;
 use imap::{Client, error};
 use std::io::{self, BufRead};
-use native_tls::TlsStream;
+
+use crate::list_messages;
 
 fn get_login_data() -> (String, String) {
     // rust1.project2@zohomail.eu
@@ -41,11 +44,13 @@ pub fn run() -> error::Result<()> {
         let mut option = String::new();
         io::stdin().lock().read_line(&mut option).expect("Error loading data");
         let option_number : u32 = option.trim().parse().expect("Incorrect number was given");
+
+        let imap_session_ref = &mut imap_session;
         
-        match option_number {
-            1 => println!("Access to messages"),
-            2 => println!("Statistics"),
-            _ => println!("Other"), 
+        let _ = match option_number {
+            1 => list_messages::acces_to_messages(imap_session_ref),
+            2 => { println!("Statistics"); Ok(()) },
+            _ => Ok(()), 
         };
 
         if option_number == 3 {
