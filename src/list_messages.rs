@@ -27,21 +27,16 @@ pub fn acces_to_messages(imap_session : &mut imap::Session<TlsStream<TcpStream>>
 }
 
 fn emails_last_ten_days(imap_session : &mut imap::Session<TlsStream<TcpStream>>) -> imap::error::Result<()> {
-    // Oblicz datę sprzed 10 dni
-    let ten_days_ago = SystemTime::now() - std::time::Duration::from_secs(3600 * 1); // 86400 sekund = 1 dzień
+    // 86400 seconds = 1 day
+    let ten_days_ago = SystemTime::now() - std::time::Duration::from_secs(86400 * 10);
 
-    // Formatuj datę do formatu wymaganego przez serwer IMAP (YYYY-MM-DD)
     let date_format = "%d-%b-%Y"; // Format daty zgodny z protokołem IMAP
     let date_str = chrono::DateTime::<chrono::Utc>::from(ten_days_ago).format(date_format).to_string();
-    
-    // Buduj zapytanie IMAP
-    let query = format!("SINCE {}", date_str);
 
-    // Wysyłamy zapytanie do serwera IMAP
+    let query = format!("SINCE {}", date_str);
     let uids = imap_session.search(query.as_str())?;
 
     let mut all_parsed_emails = String::new();
-    // Iterujemy po każdym UID i pobieramy odpowiednie wiadomości
     for uid in uids.iter() {
         let messages = imap_session.fetch(uid.to_string(), "RFC822")?;
 
@@ -62,7 +57,6 @@ fn unread_emails(imap_session : &mut imap::Session<TlsStream<TcpStream>>) -> ima
     let query = "NEW";
     let uids = imap_session.search(query)?;
 
-    // Fetch and display the messages
     let mut all_parsed_emails = String::new();
     for uid in uids.iter() {
         let messages = imap_session.fetch(uid.to_string(), "RFC822")?;
