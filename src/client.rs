@@ -35,10 +35,17 @@ pub fn run() -> error::Result<()> {
 
     let (email, password) = get_login_data();
 
-    let mut imap_session = client.login(email, password).map_err(|e| e.0)?;
-    imap_session.select("INBOX")?;
+    let mut imap_session = client.login(email, password).map_err(|e| {
+        eprintln!("Login error!");
+        e.0
+    })?;
 
     println!("You have logged in correctly.");
+
+    imap_session.select("BLA").map_err(|e| {
+        println!("Error selecting INBOX\n: {}", e);
+        e
+    })?;
 
     loop {
         println!("Choose one of the options: ");
