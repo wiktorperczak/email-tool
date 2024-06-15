@@ -4,7 +4,8 @@ extern crate native_tls;
 use std::net::TcpStream;
 use native_tls::TlsStream;
 use imap::{Client, error};
-use std::io::{self, BufRead};
+use std::io::{self, BufRead, Write};
+use rpassword::read_password;
 
 use crate::list_messages;
 
@@ -13,13 +14,13 @@ fn get_login_data() -> (String, String) {
     // Rust1!.Project2@
 
     let mut email = String::new();
-    let mut password = String::new();
-
     println!("Enter your e-mail: ");
     io::stdin().lock().read_line(&mut email).expect("Error loading data");
 
     println!("Enter your password: ");
-    io::stdin().lock().read_line(&mut password).expect("Error loading data");
+    io::stdout().flush().unwrap();
+    let password = read_password().unwrap();
+    // io::stdin().lock().read_line(&mut password).expect("Error loading data");
 
     (email.trim().to_string(), password.trim().to_string())
 }
