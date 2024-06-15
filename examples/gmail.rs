@@ -18,10 +18,10 @@ impl imap::Authenticator for GmailOAuth2 {
     }
 }
 
-fn main() {
+fn main() -> imap::error::Result<()> {
     let gmail_auth = GmailOAuth2 {
         user: String::from("rust1.project2@gmail.com"),
-        access_token: String::from("ya29.a0AXooCgvlrTINP-lgUIMZS0ZYXEDhWaCF3uoqdOQ-BODNfG2TNmKDSWsTjFyfH7dA6nrw1pXKLG3lO9CvNn6fEZ2LyMOudRvc4mmnymtwGv4RA_t9ycs1Y1b4n-Vjxup0KT9XrErtmdqXR6MGmaJl2f2W27gIgH6SlkNJaCgYKAX8SARESFQHGX2MicG3ite7B1xHSMFN0ThySbw0171"),
+        access_token: String::from(""),
     };
 
     let domain = "imap.gmail.com";
@@ -33,50 +33,36 @@ fn main() {
     //     .connect()
     //     .expect("Could not connect to imap.gmail.com");
 
-    let mut imap_session = match client.authenticate("XOAUTH2", &gmail_auth) {
-        Ok(c) => c,
-        Err((e, _unauth_client)) => {
-            println!("error authenticating: {}", e);
-            return;
-        }
-    };
+    let mut imap_session = client.authenticate("XOAUTH2", &gmail_auth).map_err(|e| {
+        eprintln!("Login error!");
+        e.0
+    })?;
 
-    match imap_session.select("INBOX") {
-        Ok(mailbox) => println!("{}", mailbox),
-        Err(e) => println!("Error selecting INBOX: {}", e),
-    };
 
-    // let uids = imap_session.search("FLAGGED")?;
-    // if uids.is_empty() {
-    //     println!("No starred messages found");
-    //     return Ok(());
-    // }
+    let folders = imap_session.list(None, Some("*"))?;
+    for folder in folders.iter() {
+        println!("{}", folder.name());
+    }
 
-    match imap_session.fetch("2", "body[text]") {
-        Ok(msgs) => {
-            for msg in msgs.iter() {
-                println!("MESSAGE 2: ");
-                println!("{:?}", msg);
-                
-                // TODO: konwersja wiadomości na czytelną postać
+
+    imap_session.select("INBOX").map_err(|e| {
+        println!("Error selecting INBOX\n: {}", e);
+        e
+    })?;
+
+    let uids = imap_session.search("NEW")?;
+
+    // Pobieranie i wyświetlanie każdej wiadomości
+    for uid in uids.iter() {
+        let messages = imap_session.fetch(uid.to_string(), "RFC822")?;
+        for message in messages.iter() {
+            if let Some(body) = message.body() {
+                let body_str = std::str::from_utf8(body).expect("Wiadomość nie jest poprawnym UTF-8");
+                println!("{}", body_str);
             }
         }
-        Err(e) => println!("Error Fetching email 2: {}", e),
-    };
-
-    match imap_session.fetch("2", "RFC822") {
-        Ok(msgs) => {
-            for msg in msgs.iter() {
-                println!("CONVERTED:");
-                let body = msg.body().expect("message did not have a body!");
-                let body1 = std::str::from_utf8(body)
-                                        .expect("message was not valid utf-8")
-                                        .to_string();
-                println!("TEXT: {}", body1);
-            }
-        }
-        Err(e) => println!("Error Fetching email 2: {}", e),
-    };
+    }
 
     imap_session.logout().unwrap();
+    Ok(())
 }
