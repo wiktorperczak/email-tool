@@ -1,0 +1,37 @@
+From:Rust Project <rust1.project2@zohomail.eu>
+Date:Sun, 16 Jun 2024 12:10:43 +0200
+
+Hello,
+
+
+
+This is a new message for testing.
+
+1234567890
+
+
+
+Sincerely,
+
+Rust
+
+
+Sent using {0}
+
+__________________________________________________
+
+
+From:Wiktor Perczak <wiktor.prczk@gmail.com>
+Date:Thu, 13 Jun 2024 17:43:24 +0200
+
+This is a test massage.
+1234567890
+
+Sincerely,
+Anonim
+
+
+__________________________________________________
+
+
+
