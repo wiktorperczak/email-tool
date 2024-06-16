@@ -1,6 +1,7 @@
 extern crate imap;
 extern crate native_tls;
 use crate::list_messages;
+use crate::statistics;
 
 use std::net::TcpStream;
 use native_tls::TlsStream;
@@ -70,16 +71,18 @@ pub fn run() -> error::Result<()> {
 
     loop {
         println!("\nChoose one of the options: ");
+        println!("1 -- Show messages");
+        println!("2 -- Get statistics");
+        println!("3 -- Finish session");
+
         let mut option = String::new();
         io::stdin().lock().read_line(&mut option).expect("Error loading data");
-        let option_number : u32 = option.trim().parse().expect("Incorrect number was given");
-
-        let imap_session_ref = &mut imap_session;
+        let option_number : u32 = option.trim().parse().expect("Incorrect data was given");
         
-        let _ = match option_number {
-            1 => list_messages::acces_to_messages(imap_session_ref),
-            2 => { println!("Statistics"); Ok(()) },
-            _ => Ok(()), 
+        imap_session = match option_number {
+            1 => list_messages::acces_to_messages(imap_session),
+            2 => statistics::generate_statistics(imap_session),
+            _ => imap_session, 
         };
 
         if option_number == 3 {
