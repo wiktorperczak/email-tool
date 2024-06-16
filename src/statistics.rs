@@ -1,0 +1,71 @@
+extern crate imap;
+extern crate native_tls;
+
+use std::net::TcpStream;
+use native_tls::TlsStream;
+use chrono::{Datelike, Utc};
+
+pub fn generate_statistics(mut imap_session : imap::Session<TlsStream<TcpStream>>) -> imap::Session<TlsStream<TcpStream>> {
+    let line = "_".repeat(50);
+    println!("\n{}\n", line);
+
+    let _ = stats_by_year(&mut imap_session);
+    
+    println!("\n{}\n", line);
+    
+    imap_session
+}
+
+fn stats_by_year(imap_session : &mut imap::Session<TlsStream<TcpStream>>) -> imap::error::Result<()> {
+    let mut total_messages = 0;
+    let uids = imap_session.search("1")?;
+    let mut first_year : u32 = 2010;
+
+
+    for uid in uids.iter() {
+        let messages = imap_session.fetch(uid.to_string(), "RFC822.HEADER")?;
+    
+        for message in messages.iter() {
+            if let Some(header) = message.header() {
+                let header_str = std::str::from_utf8(header).unwrap();    
+                
+                if let Some(year) = parse_year_from_date(header_str) {
+                    first_year = year;
+                }
+            }
+        }
+    
+    }
+
+    let current_year = Utc::now().year();
+    let first_year = first_year as i32;
+
+    for year in (first_year..=current_year).rev() {
+        let start_date_str = format!("01-Jan-{}", year);
+        let end_date_str = format!("01-Jan-{}", year+1);
+
+        let search_criteria = format!("SINCE {} BEFORE {}", start_date_str, end_date_str);
+        let uids = imap_session.search(&search_criteria)?;
+
+        println!("Number of messages in {}: {}", year, uids.len());
+        total_messages += uids.len();
+    }
+
+    println!("\nTotal number of messages: {}\n", total_messages);
+
+    Ok(())
+}
+
+
+fn parse_year_from_date(header_data: &str) -> Option<u32> {
+    let date_prefix = "Date:";
+    if let Some(date_index) = header_data.find(date_prefix) {
+        let date_start = date_index + date_prefix.len() + 13; // Początek daty po "Date:"
+        if let Some(year_str) = header_data.get(date_start..date_start + 4) {
+            if let Ok(year) = year_str.trim().parse::<u32>() {
+                return Some(year);
+            }
+        }
+    }
+    None
+}
