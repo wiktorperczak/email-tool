@@ -9,7 +9,7 @@ use std::io::{self, BufRead};
 use std::time::SystemTime;
 
 
-pub fn acces_to_messages(imap_session : &mut imap::Session<TlsStream<TcpStream>>) -> imap::error::Result<()> {
+pub fn acces_to_messages(mut imap_session : imap::Session<TlsStream<TcpStream>>) -> imap::Session<TlsStream<TcpStream>> {
     println!("Choose one of the options: ");
     println!("1 -- list all messages from last 10 days");
     println!("2 -- list all unread messages");
@@ -21,14 +21,14 @@ pub fn acces_to_messages(imap_session : &mut imap::Session<TlsStream<TcpStream>>
     let option_number : u32 = option.trim().parse().expect("Incorrect number was given");
 
     let _ = match option_number {
-        1 => emails_last_ten_days(imap_session),
-        2 => unread_emails(imap_session),
-        3 => emails_from_folder(imap_session),
-        4 => search_by_sender(imap_session),
+        1 => emails_last_ten_days(&mut imap_session),
+        2 => unread_emails(&mut imap_session),
+        3 => emails_from_folder(&mut imap_session),
+        4 => search_by_sender(&mut imap_session),
         _ => Ok(()),
     };
 
-    Ok(())
+    imap_session
 }
 
 fn days(number : u64) -> String {
