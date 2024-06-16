@@ -28,7 +28,7 @@ pub fn parse_email(body : &[u8]) -> String {
     let date = parsed_message.headers.get_first_value("Date").unwrap_or_else(|| "Unknown".to_string());
 
     let line = "_".repeat(50);
-    let combined_content = format!("From:{}\nDate:{}\n\n{}\n\n{}\n\n", from, date, text_body, line);
-    
+    let combined_content = format!("From:{}\nDate:{}\n\n{}\n{}\n\n\n", from, date, text_body, line);
+
     combined_content
 }
