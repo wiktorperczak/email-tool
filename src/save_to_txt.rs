@@ -31,7 +31,7 @@ pub fn save_to_txt(email : String) {
     let file_name = format!("emails/{}.txt", formatted_date);
 
     match append_to_file(&file_name, email.as_str()) {
-        Ok(_) => println!("Text successfully appended to the file."),
-        Err(e) => eprintln!("Failed to append text to the file: {}", e),
+        Ok(_) => println!("Messages successfully saved to the .txt file."),
+        Err(e) => eprintln!("Failed to save the messages: {}", e),
     }
 }
