@@ -9,6 +9,7 @@ pub fn generate_statistics(mut imap_session : imap::Session<TlsStream<TcpStream>
     let line = "_".repeat(50);
     println!("\n{}\n", line);
 
+    let _ = folder_statistics(&mut imap_session);
     let _ = stats_by_year(&mut imap_session);
     
     println!("\n{}\n", line);
@@ -17,7 +18,8 @@ pub fn generate_statistics(mut imap_session : imap::Session<TlsStream<TcpStream>
 }
 
 fn stats_by_year(imap_session : &mut imap::Session<TlsStream<TcpStream>>) -> imap::error::Result<()> {
-    let mut total_messages = 0;
+    imap_session.select("INBOX")?;
+
     let uids = imap_session.search("1")?;
     let mut first_year : u32 = 2010;
 
@@ -48,10 +50,7 @@ fn stats_by_year(imap_session : &mut imap::Session<TlsStream<TcpStream>>) -> ima
         let uids = imap_session.search(&search_criteria)?;
 
         println!("Number of messages in {}: {}", year, uids.len());
-        total_messages += uids.len();
     }
-
-    println!("\nTotal number of messages: {}\n", total_messages);
 
     Ok(())
 }
@@ -68,4 +67,21 @@ fn parse_year_from_date(header_data: &str) -> Option<u32> {
         }
     }
     None
+}
+
+fn folder_statistics(imap_session : &mut imap::Session<TlsStream<TcpStream>>) -> imap::error::Result<()> {
+    let folders = ["Starred", "Important",
+               "Sent Mail", "Spam", "Trash"];
+
+    let uids = imap_session.search("ALL")?;
+    println!("Total number of messages: {}\n", uids.len());
+
+    for folder in folders {
+        imap_session.select(format!("{}{}", "[Gmail]/", folder))?;
+        let uids = imap_session.search("ALL")?;
+        println!("Number of messages in {}: {}", folder, uids.len());
+    }
+
+    println!();
+    Ok(())
 }
