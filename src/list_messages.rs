@@ -112,7 +112,7 @@ fn emails_from_folder(imap_session : &mut imap::Session<TlsStream<TcpStream>>) -
     let folder = format!("{}{}", folder_prefix, folder_sufix);
 
     imap_session.select(folder).map_err(|e| {
-        println!("Error selecting INBOX\n: {}", e);
+        println!("Error selecting folder\n: {}", e);
         e
     })?;
 
