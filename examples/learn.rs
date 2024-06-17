@@ -1,18 +1,16 @@
-fn test(s1 : String) -> String {
-    println!("{}", s1);
-    s1
+fn test(s : String) -> String {
+    println!("{}", s);
+    s
 }
 
-fn test1(s1 : &String) {
-    println!("Test1: {}", s1);
+fn test1(s : &mut String) {
+    *s = s.to_lowercase();
+    println!("{}", s);
 }
 
 fn main() {
-    let s1 = String::from("Test string");
-    // let s2 = test(s1);
-    // println!("{}", s2);
-
-    let s2 = &s1;
-    test1(s2);
-    println!("{}", s1);
+    let mut s = String::from("HELLO");
+    s = test(s);
+    println!("New: {}", s);
+    test1(&mut s);
 }

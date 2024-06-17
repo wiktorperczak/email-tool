@@ -21,7 +21,7 @@ impl imap::Authenticator for GmailOAuth2 {
 fn main() -> imap::error::Result<()> {
     let gmail_auth = GmailOAuth2 {
         user: String::from("rust1.project2@gmail.com"),
-        access_token: String::from(""),
+        access_token: String::from("ya29.a0AXooCgvNwe-xI6zkebpdQ1nwoIEVNNDwB-Igb7xcES8qmImL4sk_wq8vhXC4zB4Oxz3cg1RgYo67ah79yMH5BULMc4cUMc00Lh5JKylAFc_3sOnTEWCAU_Q-tLtKluaS3BJhAHJvoS2SkhjEMBQdkzte37NYmXLY45NFaCgYKAWQSARESFQHGX2MiWzVC75_9Yyya2rANk4nyRw0171"),
     };
 
     let domain = "imap.gmail.com";
@@ -45,12 +45,12 @@ fn main() -> imap::error::Result<()> {
     }
 
 
-    imap_session.select("INBOX").map_err(|e| {
+    imap_session.select("[Gmail]/Starred").map_err(|e| {
         println!("Error selecting INBOX\n: {}", e);
         e
     })?;
 
-    let uids = imap_session.search("NEW")?;
+    let uids = imap_session.search("ALL")?;
 
     // Pobieranie i wyświetlanie każdej wiadomości
     for uid in uids.iter() {
