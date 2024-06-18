@@ -185,3 +185,52 @@ fn get_sender(header_data: &str) -> String {
     }
     "Unknown".to_string()
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_get_sender_with_angle_brackets() {
+        let header_data = "From: John Doe <john.doe@example.com>";
+        let sender = get_sender(header_data);
+        assert_eq!(sender, "john.doe@example.com");
+    }
+
+    #[test]
+    fn test_get_sender_without_angle_brackets() {
+        let header_data = "From: jane.doe@example.com";
+        let sender = get_sender(header_data);
+        assert_eq!(sender, "jane.doe@example.com");
+    }
+
+    #[test]
+    fn test_get_sender_with_mixed_format() {
+        let header_data = "From: John Doe <john.doe@example.com>";
+        let sender = get_sender(header_data);
+        assert_eq!(sender, "john.doe@example.com");
+
+        let header_data = "From: jane.doe@example.com";
+        let sender = get_sender(header_data);
+        assert_eq!(sender, "jane.doe@example.com");
+    }
+
+    #[test]
+    fn test_get_sender_case_insensitivity() {
+        let header_data = "FROM: John Doe <john.doe@example.com>";
+        let sender = get_sender(header_data);
+        assert_eq!(sender, "john.doe@example.com");
+
+        let header_data = "from: jane.doe@example.com";
+        let sender = get_sender(header_data);
+        assert_eq!(sender, "jane.doe@example.com");
+    }
+
+    #[test]
+    fn test_get_sender_unknown_format() {
+        let header_data = "Subject: Hello World";
+        let sender = get_sender(header_data);
+        assert_eq!(sender, "Unknown");
+    }
+}
