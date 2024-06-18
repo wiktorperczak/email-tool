@@ -56,6 +56,25 @@ fn stats_by_year(imap_session : &mut imap::Session<TlsStream<TcpStream>>) -> ima
 }
 
 
+
+fn folder_statistics(imap_session : &mut imap::Session<TlsStream<TcpStream>>) -> imap::error::Result<()> {
+    let folders = ["Starred", "Important",
+               "Sent Mail", "Spam", "Trash"];
+               
+               let uids = imap_session.search("ALL")?;
+    println!("Total number of messages: {}\n", uids.len());
+
+    for folder in folders {
+        imap_session.select(format!("{}{}", "[Gmail]/", folder))?;
+        let uids = imap_session.search("ALL")?;
+        println!("Number of messages in {}: {}", folder, uids.len());
+    }
+    
+    println!();
+    Ok(())
+}
+
+
 fn parse_year_from_date(header_data: &str) -> Option<u32> {
     let date_prefix = "Date:";
     if let Some(date_index) = header_data.find(date_prefix) {
@@ -69,19 +88,29 @@ fn parse_year_from_date(header_data: &str) -> Option<u32> {
     None
 }
 
-fn folder_statistics(imap_session : &mut imap::Session<TlsStream<TcpStream>>) -> imap::error::Result<()> {
-    let folders = ["Starred", "Important",
-               "Sent Mail", "Spam", "Trash"];
 
-    let uids = imap_session.search("ALL")?;
-    println!("Total number of messages: {}\n", uids.len());
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-    for folder in folders {
-        imap_session.select(format!("{}{}", "[Gmail]/", folder))?;
-        let uids = imap_session.search("ALL")?;
-        println!("Number of messages in {}: {}", folder, uids.len());
+    #[test]
+    fn test_parse_year_from_date_valid() {
+        let header_data = "Date: Mon, 21 Jun 2024 15:30:00 +0000";
+        let year = parse_year_from_date(header_data);
+        assert_eq!(year, Some(2024));
     }
 
-    println!();
-    Ok(())
+    #[test]
+    fn test_parse_year_from_date_no_date_prefix() {
+        let header_data = "From: John Doe <john.doe@example.com>";
+        let year = parse_year_from_date(header_data);
+        assert_eq!(year, None);
+    }
+
+    #[test]
+    fn test_parse_year_from_date_no_year() {
+        let header_data = "Date: Mon, 21 Jun 15:30:00 +0000";
+        let year = parse_year_from_date(header_data);
+        assert_eq!(year, None);
+    }
 }
