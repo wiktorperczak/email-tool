@@ -32,3 +32,49 @@ pub fn parse_email(body : &[u8]) -> String {
 
     combined_content
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_email_with_plain_text() {
+        let email = b"\
+                    From: sender@example.com\r\n\
+                    Date: Tue, 15 Jun 2021 16:02:00 +0200\r\n\
+                    Content-Type: text/plain; charset=\"UTF-8\"\r\n\
+                    \r\n\
+                    This is a plain text email body.";
+                            
+        let result = parse_email(email);
+        let expected = "From:sender@example.com\nDate:Tue, 15 Jun 2021 16:02:00 +0200\n\nThis is a plain text email body.\n__________________________________________________\n\n\n";
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_parse_email_with_unknown_fields() {
+        let email = b"\
+From: unknown@example.com\r\n\
+Content-Type: text/plain; charset=\"UTF-8\"\r\n\
+\r\n\
+This email has an unknown date.";
+        
+        let result = parse_email(email);
+        let expected = "From:unknown@example.com\nDate:Unknown\n\nThis email has an unknown date.\n__________________________________________________\n\n\n";
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_parse_email_with_no_body() {
+        let email = b"\
+From: sender@example.com\r\n\
+Date: Tue, 15 Jun 2021 16:02:00 +0200\r\n\
+Content-Type: text/plain; charset=\"UTF-8\"\r\n\
+\r\n";
+        
+        let result = parse_email(email);
+        let expected = "From:sender@example.com\nDate:Tue, 15 Jun 2021 16:02:00 +0200\n\n\n__________________________________________________\n\n\n";
+        assert_eq!(result, expected);
+    }
+}
