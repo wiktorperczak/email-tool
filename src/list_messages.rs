@@ -9,7 +9,7 @@ use std::io::{self, BufRead};
 
 
 pub fn acces_to_messages(mut imap_session : imap::Session<TlsStream<TcpStream>>) -> imap::Session<TlsStream<TcpStream>> {
-    println!("Choose one of the options: ");
+    println!("\nChoose one of the options: ");
     println!("1 -- list all messages from last 10 days");
     println!("2 -- list all unread messages");
     println!("3 -- list messages from the given folder");
@@ -50,7 +50,6 @@ fn emails_last_ten_days(imap_session : &mut imap::Session<TlsStream<TcpStream>>)
 
     Ok(())
 }
-
 
 fn unread_emails(imap_session : &mut imap::Session<TlsStream<TcpStream>>) -> imap::error::Result<()> {
     let query = format!("SINCE {}", util::days(10));
