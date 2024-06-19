@@ -30,6 +30,19 @@ pub fn get_sender(header_data: &str) -> String {
     "Unknown".to_string()
 }
 
+pub fn parse_year_from_date(header_data: &str) -> Option<u32> {
+    let date_prefix = "Date:";
+    if let Some(date_index) = header_data.find(date_prefix) {
+        let date_start = date_index + date_prefix.len() + 13; // Początek daty po "Date:"
+        if let Some(year_str) = header_data.get(date_start..date_start + 4) {
+            if let Ok(year) = year_str.trim().parse::<u32>() {
+                return Some(year);
+            }
+        }
+    }
+    None
+}
+
 
 #[cfg(test)]
 mod tests {
@@ -76,5 +89,26 @@ mod tests {
         let header_data = "Subject: Hello World";
         let sender = get_sender(header_data);
         assert_eq!(sender, "Unknown");
+    }
+
+    #[test]
+    fn test_parse_year_from_date_valid() {
+        let header_data = "Date: Mon, 21 Jun 2024 15:30:00 +0000";
+        let year = parse_year_from_date(header_data);
+        assert_eq!(year, Some(2024));
+    }
+
+    #[test]
+    fn test_parse_year_from_date_no_date_prefix() {
+        let header_data = "From: John Doe <john.doe@example.com>";
+        let year = parse_year_from_date(header_data);
+        assert_eq!(year, None);
+    }
+
+    #[test]
+    fn test_parse_year_from_date_no_year() {
+        let header_data = "Date: Mon, 21 Jun 15:30:00 +0000";
+        let year = parse_year_from_date(header_data);
+        assert_eq!(year, None);
     }
 }
