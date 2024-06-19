@@ -4,6 +4,7 @@ use crate::list_messages;
 use crate::statistics;
 
 use std::net::TcpStream;
+use imap::Authenticator;
 use native_tls::TlsStream;
 use imap::{Client, error};
 use std::io::{self, BufRead, Write};
@@ -25,6 +26,7 @@ impl imap::Authenticator for GmailOAuth2 {
         )
     }
 }
+
 
 
 fn get_login_data() -> (String, String) {
@@ -91,4 +93,112 @@ pub fn run() -> error::Result<()> {
     }
 
     Ok(())
+}
+
+
+
+struct MockAuthenticator;
+
+impl Authenticator for MockAuthenticator {
+    type Response = &'static str; // Określenie typu odpowiedzi
+
+    fn process(&self, _data: &[u8]) -> Self::Response {
+        "mock_response"
+    }
+}
+
+pub trait ImapClient {
+    fn authenticate(&self, authenticator: Box<dyn Authenticator<Response = String>>) -> Result<(), String>;
+    fn select(&mut self, folder: &str) -> Result<(), String>;
+    fn fetch(&mut self, sequence_set: &str, query: &str) -> Result<Vec<String>, String>;
+}
+
+pub struct RealImapClient {
+    // Tutaj mogą być przechowywane informacje potrzebne do połączenia z serwerem IMAP
+}
+
+impl ImapClient for RealImapClient {
+    fn authenticate(&self, _authenticator: Box<dyn Authenticator<Response = String>>) -> Result<(), String> {
+        println!("Real client: Authenticating...");
+        // Symulacja rzeczywistego procesu autentykacji
+        Ok(())
+    }
+
+    fn select(&mut self, folder: &str) -> Result<(), String> {
+        println!("Real client: Selecting folder {}...", folder);
+        // Symulacja rzeczywistego procesu wyboru folderu
+        Ok(())
+    }
+
+    fn fetch(&mut self, sequence_set: &str, query: &str) -> Result<Vec<String>, String> {
+        println!("Real client: Fetching messages with sequence set {} and query {}...", sequence_set, query);
+        // Symulacja rzeczywistego procesu pobierania wiadomości
+        Ok(vec![
+            "Message 1".to_string(),
+            "Message 2".to_string(),
+            "Message 3".to_string(),
+        ])
+    }
+}
+
+pub struct MockImapClient {
+    // Można dodać stan, jeśli to konieczne do testów
+}
+
+impl ImapClient for MockImapClient {
+    fn authenticate(&self, _authenticator: Box<dyn Authenticator<Response = String>>) -> Result<(), String> {
+        println!("Mock client: Authenticating...");
+        // Symulacja prostego mocka autentykacji
+        Ok(())
+    }
+
+    fn select(&mut self, folder: &str) -> Result<(), String> {
+        println!("Mock client: Selecting folder {}...", folder);
+        // Symulacja prostego mocka wyboru folderu
+        Ok(())
+    }
+
+    fn fetch(&mut self, sequence_set: &str, query: &str) -> Result<Vec<String>, String> {
+        println!("Mock client: Fetching messages with sequence set {} and query {}...", sequence_set, query);
+        // Symulacja prostego mocka pobierania wiadomości
+        Ok(vec![
+            "Mock Message 1".to_string(),
+            "Mock Message 2".to_string(),
+            "Mock Message 3".to_string(),
+        ])
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    struct MockAuthenticator;
+
+    impl Authenticator for MockAuthenticator {
+        type Response = String;
+
+        fn process(&self, _data: &[u8]) -> Self::Response {
+            "mock_token".to_string()
+        }
+    }
+
+    #[test]
+    fn test_mock_imap_client_operations() {
+        let mut client = MockImapClient {};
+
+        let result = client.authenticate(Box::new(MockAuthenticator {}));
+        assert!(result.is_ok());
+
+        let result = client.select("INBOX");
+        assert!(result.is_ok());
+
+        let result = client.fetch("1:3", "ALL");
+        assert!(result.is_ok());
+        let messages = result.unwrap();
+        assert_eq!(messages.len(), 3);
+        assert_eq!(messages[0], "Mock Message 1");
+        assert_eq!(messages[1], "Mock Message 2");
+        assert_eq!(messages[2], "Mock Message 3");
+    }
 }

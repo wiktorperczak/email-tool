@@ -3,6 +3,7 @@ mod list_messages;
 mod email_parser;
 mod save_to_txt;
 mod statistics;
+mod util;
 
 use clearscreen::clear;
 

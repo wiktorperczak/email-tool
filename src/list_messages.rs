@@ -1,4 +1,4 @@
-use crate::{email_parser, save_to_txt};
+use crate::{email_parser, save_to_txt, util};
 
 extern crate imap;
 extern crate native_tls;
@@ -6,7 +6,6 @@ extern crate native_tls;
 use std::net::TcpStream;
 use native_tls::TlsStream;
 use std::io::{self, BufRead};
-use std::time::SystemTime;
 
 
 pub fn acces_to_messages(mut imap_session : imap::Session<TlsStream<TcpStream>>) -> imap::Session<TlsStream<TcpStream>> {
@@ -31,19 +30,9 @@ pub fn acces_to_messages(mut imap_session : imap::Session<TlsStream<TcpStream>>)
     imap_session
 }
 
-fn days(number : u64) -> String {
-    // 86400 seconds = 1 day
-    let ten_days_ago = SystemTime::now() - std::time::Duration::from_secs(86400 * number);
-
-    let date_format = "%d-%b-%Y";
-    let date_str = chrono::DateTime::<chrono::Utc>::from(ten_days_ago).format(date_format).to_string();
-
-    date_str
-}
-
 
 fn emails_last_ten_days(imap_session : &mut imap::Session<TlsStream<TcpStream>>) -> imap::error::Result<()> {
-    let query = format!("SINCE {}", days(10));
+    let query = format!("SINCE {}", util::days(10));
     let uids = imap_session.search(query.as_str())?;
 
     let mut all_parsed_emails = String::new();
@@ -64,7 +53,7 @@ fn emails_last_ten_days(imap_session : &mut imap::Session<TlsStream<TcpStream>>)
 
 
 fn unread_emails(imap_session : &mut imap::Session<TlsStream<TcpStream>>) -> imap::error::Result<()> {
-    let query = format!("SINCE {}", days(10));
+    let query = format!("SINCE {}", util::days(10));
     let uids = imap_session.search(query)?;
 
     let mut all_parsed_emails = String::new();
@@ -128,26 +117,19 @@ fn search_by_sender(imap_session : &mut imap::Session<TlsStream<TcpStream>>) -> 
     io::stdin().lock().read_line(&mut sender_email).expect("Error loading data");
     let sender_email = sender_email.as_str().trim_end();
 
-    let query = format!("SINCE {}", days(100));
+    let query = format!("SINCE {}", util::days(20));
     let uids = imap_session.search(query.as_str())?;
 
     let mut all_parsed_emails = String::new();
-    let mut i : i32 = 0;
 
     for uid in uids.iter() {
         let messages = imap_session.fetch(uid.to_string(), "RFC822.HEADER")?;
 
         for message in messages.iter() {
-            i += 1;
-            if i % 100 == 0 {
-                println!("{}", i);
-            }
-    
-            // Pobierz nagłówek "From"
             if let Some(header) = message.header() {
                 let header_str = std::str::from_utf8(header).unwrap();              
-                if sender_email == get_sender(header_str) {
-                    println!("OK");
+                if sender_email == util::get_sender(header_str) {
+                    println!("Found message");
 
                     let full_message = imap_session.fetch(uid.to_string(), "RFC822")?;
                     for msg in full_message.iter() {
@@ -163,74 +145,4 @@ fn search_by_sender(imap_session : &mut imap::Session<TlsStream<TcpStream>>) -> 
 
     save_to_txt::save_to_txt(all_parsed_emails);
     Ok(())
-}
-
-fn get_sender(header_data: &str) -> String {
-    for line in header_data.lines() {
-        if line.to_lowercase().starts_with("from:") {
-            if let Some(start) = line.find('<') {
-                if let Some(end) = line.find('>') {
-                    return line[start + 1..end].to_string();
-                }
-            } else {
-                // If there are no angle brackets, try to extract the email directly
-                let parts: Vec<&str> = line.split_whitespace().collect();
-                for part in parts {
-                    if part.contains('@') {
-                        return part.to_string();
-                    }
-                }
-            }
-        }
-    }
-    "Unknown".to_string()
-}
-
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_get_sender_with_angle_brackets() {
-        let header_data = "From: John Doe <john.doe@example.com>";
-        let sender = get_sender(header_data);
-        assert_eq!(sender, "john.doe@example.com");
-    }
-
-    #[test]
-    fn test_get_sender_without_angle_brackets() {
-        let header_data = "From: jane.doe@example.com";
-        let sender = get_sender(header_data);
-        assert_eq!(sender, "jane.doe@example.com");
-    }
-
-    #[test]
-    fn test_get_sender_with_mixed_format() {
-        let header_data = "From: John Doe <john.doe@example.com>";
-        let sender = get_sender(header_data);
-        assert_eq!(sender, "john.doe@example.com");
-
-        let header_data = "From: jane.doe@example.com";
-        let sender = get_sender(header_data);
-        assert_eq!(sender, "jane.doe@example.com");
-    }
-
-    #[test]
-    fn test_get_sender_case_insensitivity() {
-        let header_data = "FROM: John Doe <john.doe@example.com>";
-        let sender = get_sender(header_data);
-        assert_eq!(sender, "john.doe@example.com");
-
-        let header_data = "from: jane.doe@example.com";
-        let sender = get_sender(header_data);
-        assert_eq!(sender, "jane.doe@example.com");
-    }
-
-    #[test]
-    fn test_get_sender_unknown_format() {
-        let header_data = "Subject: Hello World";
-        let sender = get_sender(header_data);
-        assert_eq!(sender, "Unknown");
-    }
 }
