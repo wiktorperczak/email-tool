@@ -1,6 +1,6 @@
 # Email searching and statistics tool
 
-Program uses IMAP protocol to connect with email, and provides many functions. User can download messages from given folder, from given user or all unread messages. Messages are saved to .txt file. Additionally program generates statistics of a given account, such as: total number of messages, number of messages in given folder, and most active message senders.
+Program uses IMAP protocol to connect with email account, and provides many functions. User can download messages from given folder, from given user or all unread messages. Messages are saved to .txt file. Additionally program generates statistics of a given account, such as: total number of messages, number of messages in given folder, and most active message senders.
 
 Note: Currently, only account from gmail are supported.
 
